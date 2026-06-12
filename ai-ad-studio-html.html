@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Ad Studio – Viral Ad Workflow OS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#030712;color:#f9fafb;font-family:system-ui,-apple-system,sans-serif;min-height:100vh}
+  ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#111827}::-webkit-scrollbar-thumb{background:#374151;border-radius:3px}
+  a{color:inherit;text-decoration:none}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const{useState}=React;
+
+const SCRIPT_PROMPT=`You are a world-class viral AI ads creative director, trained specifically in the "Liquid Death School" of advertising — the format that uses provocative double-entendre, deadpan delivery, and a diverse cast of talking-head characters to make commercials that go viral on social media.
+
+REFERENCE EXAMPLE (study this DNA):
+Liquid Death "Small Ones" — six characters of different ages, genders, and backgrounds talk to camera about preferring "small ones" using deliberately ambiguous, slightly risqué language. The reveal at 0:40 is that they're talking about the brand's new smaller water cans.
+
+THE PROVEN 5-PART FORMULA:
+1. TEASE (0–3s): One character opens with a provocative-sounding statement that has obvious double meaning.
+2. ESTABLISH (3–15s): 2–3 more characters reinforce the ambiguous phrase from different angles, escalating the absurdity.
+3. ESCALATE (15–28s): 2–3 more characters push the bit to its limit with the most outrageous-but-still-deadpan take.
+4. REVEAL (28–35s): Narrator (or final character) reveals the actual product — making everything click.
+5. KICKER (35–40s): One more line that ties back to the joke and lands the punchline.
+
+YOUR JOB:
+Help me write a hilarious, under-40-second talking-head commercial script using this exact formula for MY product.
+
+INSTRUCTIONS:
+Ask me the following questions ONE AT A TIME. Wait for my answer before moving to the next question. Push back if my answer is weak or generic — your job is to extract the funniest possible angle, not to accept the first thing I say.
+
+Q1. What is your product/brand? (Name + one-line description of what it does)
+Q2. What's the specific FEATURE, UPDATE, or PRODUCT ANGLE you want this commercial to highlight?
+Q3. What phrase could be intentionally MISINTERPRETED as something risqué, taboo, or absurd? Brainstorm 5 candidates.
+Q4. What's your brand voice? (edgy/punk, dry/deadpan, absurdist, family-friendly weird, dark humor, blue-collar honest, corporate-but-self-aware, other)
+Q5. Who is your target audience?
+Q6. Any topics, demographics, or jokes you want to AVOID?
+Q7. Optional: Any character archetypes you LOVE for the cast?
+
+ONCE I'VE ANSWERED ALL 7 QUESTIONS, deliver:
+PART A — THE FULL SCRIPT (Scene 1–7, each with LOOK, SETTING, COSTUME/PROPS, DIALOGUE, DELIVERY, TIMECODE)
+PART B — 3 ALTERNATIVE REVEAL TAGLINES
+PART C — A 40-SECOND ENERGY MAP
+
+Begin now by asking me Question 1.`;
+
+const JSON_PROMPT=`Assume you are a world class level of creative director and a visual story teller. Who is extremely good at prompting as well. You prompt in a way that you get desired output of a videos that stuns the viewers with its quality and extreme attention to the details of video generation.
+
+I want you to go ahead and study my entire script for me [script is already discussed before in our conversation]. Then help me craft customizable JSON Prompts for each scene. First I want you to understand the scene and then plot how many videos we might require to bring that scene to reality. Then I want you to write the JSON prompt for all the plotted scenes in a tabular format.
+
+So, that i can give to a VEO 3.1 Video Generation Model so that i can generate those stunning visual videos. Just make sure you maintain the same characters, actors, faces, fonts, music theme throughout the Ai Film. color grade & tonality of the characters should be consistent. (Do not give me a separate master prompt or such for consistency include that inside all of the prompts already)
+
+I HAVE ALREADY ATTACHED MY SCRIPT IN OUR DISCUSSION
+
+Go through it & You can Ask me TOP 3 questions that you might need answer to inorder to make sure that it turns out to be the creative prompts that executes the storyline. Once you get the answers. Further generate JSON Prompt for each scenes in a tabular format and give it to me. At the end attach the complete VoiceOver Separately that i can give to LYRIA Google Gemini and turn it into a music+vo for my ai film.`;
+
+const VEO_REFERENCE=`VEO 3.1 PROMPT QUALITY CHECKLIST — paste into your JSON before generating.
+
+Every scene's JSON should include these keys at minimum:
+{
+  "shot": "medium close-up / close-up / wide",
+  "subject": "[character description — age, ethnicity, hair, eyes, build]",
+  "wardrobe": "[exact clothing + materials + colors]",
+  "setting": "[location + time of day + lighting source]",
+  "action": "[what the character physically does]",
+  "dialogue": "[exact line, in quotes]",
+  "delivery": "[deadpan / sincere / smug / nervous — tonal direction]",
+  "camera": "[static / slow push-in / handheld / locked off]",
+  "lens": "35mm / 50mm / 85mm",
+  "color_grade": "[warm Kodak / cool teal-orange / desaturated documentary]",
+  "audio": "natural room tone, no music",
+  "duration": "5s"
+}
+
+PRO TIPS:
+- Lock color_grade and lens to the SAME values across all scenes.
+- For talking heads, "static, locked off, 50mm, eye-level" is your default.
+- Put dialogue in audio block AND in a separate dialogue field.
+- Always specify "no music in scene audio" — you'll add music in post.`;
+
+const ELEVENLABS=`ELEVENLABS EMOTION TAG CHEATSHEET
+
+[whisper] — intimate, conspiratorial lines
+[excited] — reveals and product callouts
+[deadpan] — joke-setup lines
+[laughs] — natural laughter
+[sighs] — resigned humor
+[sarcastic] — dry takes
+[shouting] — emphasis (use sparingly)
+[pause] — comic timing (1-2 second beat)
+
+EXAMPLE NARRATOR REVEAL:
+"[deadpan] Introducing... our new small ones. [pause] [excited] But don't worry — we still have the big ones too."
+
+VOICE PICK GUIDE:
+- Edge/Liquid-Death style → "Adam" or "Antoni" (male, dry)
+- Warm narrator → "Bella" or "Rachel" (female, smooth)
+- Mock-corporate → "Daniel" (British, authoritative)`;
+
+const QC=`FINAL QC CHECKLIST
+
+VIDEO
+☐ Every shot is in script order
+☐ No clip is more than 0.5s longer than the dialogue inside it
+☐ Color grade matches across all shots
+☐ Character faces are recognisably the SAME person scene-to-scene
+☐ The reveal shot of the product is sharp, well-lit, and on-brand
+
+AUDIO
+☐ Voiceover levels peaking around -6dB
+☐ Background music ducked under VO (-18dB under VO)
+☐ No clipping or distortion
+☐ Reveal line lands on the product reveal frame
+☐ Final kicker line has air to breathe
+
+TEXT / SUPERS
+☐ Brand logo appears on the reveal — minimum 1.5 seconds
+☐ Any supers are readable on mobile
+☐ Captions/subtitles burned in for silent autoplay
+
+EXPORT
+☐ 1080×1920 (9:16) for Reels/TikTok/Shorts
+☐ 1080×1080 (1:1) for feed posts
+☐ 1920×1080 (16:9) for YouTube
+☐ MP4, H.264, 30fps, AAC audio, under 100MB
+
+PUBLISH
+☐ Hook frame chosen for thumbnail (mysterious, not the reveal)
+☐ Caption written with no spoilers
+☐ First comment ready with a CTA`;
+
+const steps=[
+  {id:1,title:"Research Mastery",sub:"Generate Your Viral Script",dur:"30–45 min",
+   desc:"Reverse-engineer the Liquid Death format for your product. Use the prompt below to extract the perfect double-entendre angle and craft a sub-40-second talking-head script.",
+   tasks:["Pick ONE product, brand, or feature you want to advertise.","Open Claude.ai (or ChatGPT) in a new chat and paste the prompt below.","Answer all 7 questions thoughtfully. Push your AI for sharper double-entendres.","Iterate on the script 2–3 times. Read it out loud. If it doesn't make you laugh, it won't go viral.","Save the FINAL script as a doc — you'll paste it into Step 2."],
+   prompts:[{t:"Viral Script Generator Prompt",c:SCRIPT_PROMPT}],
+   links:[{l:"Watch Reference: Liquid Death 'Small Ones'",u:"https://www.youtube.com/watch?v=zUAvOywcPus"},{l:"Open Claude.ai",u:"https://claude.ai"},{l:"Open ChatGPT",u:"https://chatgpt.com"}]},
+  {id:2,title:"Visual Mastery",sub:"Generate Scene-by-Scene JSON Prompts",dur:"20–30 min",
+   desc:"Convert your script into Veo-3.1-ready JSON prompts with character, wardrobe, lighting, lens, color grade, and dialogue baked in.",
+   tasks:["Open the SAME Claude/ChatGPT chat where you generated your script in Step 1.","Paste the JSON prompt template below — it references your script automatically.","Answer the 3 follow-up questions the AI asks.","Review the JSON table the AI delivers — one row per scene.","Save the separate VoiceOver block at the bottom — you'll need it for Step 5.","Optional: copy the Veo Quality Checklist into your AI chat for stricter output."],
+   prompts:[{t:"JSON Scene Prompt Generator",c:JSON_PROMPT},{t:"Veo 3.1 Quality Reference (optional)",c:VEO_REFERENCE}],
+   links:[{l:"Open Claude.ai",u:"https://claude.ai"},{l:"Google Flow (Veo 3.1)",u:"https://flow.google.com"}]},
+  {id:3,title:"Generate Audio-Visuals",sub:"Run Your JSON Prompts Through Google Vids",dur:"45–90 min",
+   desc:"Take every JSON prompt from Step 2 and feed it into Google Vids' Veo generator. This is where your script becomes living footage — one scene at a time.",
+   tasks:["Open Google Vids and create a new project.","Use the 'Help me create' panel — select Veo 3.1 as your video model.","Paste your first JSON prompt. Generate. Review.","If a clip isn't right, regenerate with the SAME JSON — only tweak one parameter at a time.","Repeat for every scene in your JSON table.","PRO TIP: Generate 2–3 variations of each scene."],
+   prompts:[],
+   links:[{l:"Open Google Vids",u:"https://docs.google.com/videos/create?usp=blog"},{l:"Veo 3.1 in Flow",u:"https://flow.google.com"}]},
+  {id:4,title:"Editing",sub:"Assemble & Polish in Google Vids",dur:"30–60 min",
+   desc:"All your generated clips, in one canvas. Arrange, trim, transition, and build the product-reveal outro that makes the joke land.",
+   tasks:["Drop every generated clip into Google Vids in script order.","Trim each clip tight — no dead air before or after dialogue.","Add minimal transitions (hard cuts work better than fades for talking-head comedy).","Add supers (text overlays) ONLY where they punch up a joke.","Build the OUTRO: hero shot of the product + brand logo + reveal tagline.","Lock the edit timing BEFORE you generate the final voiceover — they must sync."],
+   prompts:[],
+   links:[{l:"Open Google Vids",u:"https://docs.google.com/videos/create?usp=blog"}]},
+  {id:5,title:"Generate End Voiceover",sub:"Bring the Reveal to Life with ElevenLabs",dur:"15–25 min",
+   desc:"The narrator reveal is the moment the entire joke pays off. Use ElevenLabs to produce a narrator voice with the exact emotion, pacing, and edge your script demands.",
+   tasks:["Open ElevenLabs (Free plan is enough for one ad).","Pick a voice that matches your narrator's vibe — see the cheatsheet below.","Paste your VoiceOver script (from Step 2's separate VO block).","Add emotion tags inside the text — [deadpan], [excited], [pause].","Generate. Listen. Regenerate until the reveal HITS.","Export as MP3, highest quality."],
+   prompts:[{t:"ElevenLabs Emotion Tag Cheatsheet",c:ELEVENLABS}],
+   links:[{l:"Open ElevenLabs",u:"https://elevenlabs.io/"}]},
+  {id:6,title:"Final",sub:"QC, Export & Ship",dur:"20–40 min",
+   desc:"Drop your ElevenLabs audio into Google Vids, run the full QC checklist, export at multiple aspect ratios, and ship it.",
+   tasks:["Drag & drop your ElevenLabs MP3 into the Google Vids timeline.","Sync the voiceover so the reveal line lands EXACTLY on the product reveal frame.","Add subtle background music (Udio, Suno, Lyria, or Minimax).","Run the Final QC Checklist below — every box must be ticked.","Export at 9:16, 1:1, and 16:9.","Publish. Save the file."],
+   prompts:[{t:"Final QC Checklist",c:QC}],
+   links:[{l:"Open Google Vids",u:"https://docs.google.com/videos/create?usp=blog"},{l:"Udio (music)",u:"https://www.udio.com/"},{l:"Suno (music)",u:"https://suno.com/"},{l:"Minimax Audio",u:"https://www.minimax.io/audio/music"}]}
+];
+
+function App(){
+  const[active,setActive]=useState(1);
+  const[done,setDone]=useState([]);
+  const[copied,setCopied]=useState(null);
+  const cur=steps.find(s=>s.id===active);
+  const pct=Math.round(done.length/steps.length*100);
+
+  const copy=(text,key)=>{
+    try{navigator.clipboard.writeText(text)}catch(e){
+      const t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);
+    }
+    setCopied(key);setTimeout(()=>setCopied(null),2000);
+  };
+
+  const complete=()=>{
+    if(!done.includes(active))setDone([...done,active]);
+    if(active<steps.length)setActive(active+1);
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  const s={
+    app:{display:'flex',minHeight:'100vh'},
+    sidebar:{width:'280px',minHeight:'100vh',background:'#111827',borderRight:'1px solid #1f2937',display:'flex',flexDirection:'column',flexShrink:0},
+    brand:{padding:'24px',borderBottom:'1px solid #1f2937'},
+    brandRow:{display:'flex',alignItems:'center',gap:'12px',marginBottom:'8px'},
+    brandIcon:{width:'40px',height:'40px',borderRadius:'12px',background:'linear-gradient(135deg,#6366f1,#9333ea)',display:'flex',alignItems:'center',justifyContent:'center'},
+    brandTitle:{fontSize:'18px',fontWeight:'700',background:'linear-gradient(90deg,#818cf8,#c084fc)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'},
+    brandSub:{fontSize:'11px',color:'#6b7280'},
+    brandDesc:{fontSize:'12px',color:'#9ca3af',lineHeight:'1.5'},
+    progWrap:{padding:'16px 24px',borderBottom:'1px solid #1f2937'},
+    progRow:{display:'flex',justifyContent:'space-between',marginBottom:'8px',fontSize:'11px'},
+    progLabel:{color:'#6b7280',textTransform:'uppercase',letterSpacing:'0.05em',fontWeight:'600'},
+    progCount:{color:'#818cf8',fontWeight:'700'},
+    progBar:{height:'6px',background:'#1f2937',borderRadius:'3px',overflow:'hidden'},
+    progFill:{height:'100%',background:'linear-gradient(90deg,#6366f1,#9333ea)',transition:'width 0.5s'},
+    progPct:{fontSize:'11px',color:'#6b7280',marginTop:'6px'},
+    nav:{flex:1,overflowY:'auto',padding:'8px 0'},
+    navBtn:(isA,isDone)=>({width:'100%',textAlign:'left',padding:'12px 24px',display:'flex',alignItems:'center',gap:'12px',border:'none',cursor:'pointer',background:isA?'#1e1b4b':'transparent',borderLeft:isA?'4px solid #818cf8':'4px solid transparent',transition:'all 0.15s'}),
+    navIcon:(isA,isDone)=>({width:'36px',height:'36px',borderRadius:'8px',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,background:isA?'#6366f1':isDone?'#14532d':'#1f2937',color:isA?'#fff':isDone?'#4ade80':'#9ca3af',fontSize:'13px',fontWeight:'700'}),
+    navText:{flex:1,minWidth:0},
+    navNum:{fontSize:'10px',color:'#6b7280',fontWeight:'600',textTransform:'uppercase'},
+    navTitle:(isA)=>({fontSize:'13px',fontWeight:'600',color:isA?'#fff':'#d1d5db',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}),
+    sidefoot:{padding:'16px 24px',borderTop:'1px solid #1f2937',fontSize:'11px',color:'#4b5563'},
+    main:{flex:1,minWidth:0,overflowY:'auto'},
+    content:{maxWidth:'800px',margin:'0 auto',padding:'40px 32px'},
+    stepMeta:{display:'flex',alignItems:'center',gap:'8px',marginBottom:'12px',fontSize:'11px'},
+    stepNum:{color:'#818cf8',textTransform:'uppercase',letterSpacing:'0.1em',fontWeight:'700'},
+    dot:{color:'#374151'},
+    stepDur:{color:'#6b7280'},
+    headerRow:{display:'flex',alignItems:'flex-start',gap:'16px',marginBottom:'16px'},
+    headerIcon:{width:'56px',height:'56px',borderRadius:'16px',background:'linear-gradient(135deg,#4f46e5,#7c3aed)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0},
+    h2:{fontSize:'32px',fontWeight:'700',color:'#f9fafb',lineHeight:'1.2'},
+    h2sub:{fontSize:'15px',color:'#c084fc',marginTop:'4px'},
+    desc:{color:'#9ca3af',lineHeight:'1.6',fontSize:'15px',marginBottom:'32px'},
+    card:{background:'#111827',border:'1px solid #1f2937',borderRadius:'16px',padding:'24px',marginBottom:'24px'},
+    cardTitle:{fontSize:'11px',textTransform:'uppercase',letterSpacing:'0.08em',fontWeight:'700',color:'#d1d5db',marginBottom:'20px'},
+    taskList:{listStyle:'none'},
+    taskItem:{display:'flex',gap:'16px',marginBottom:'16px'},
+    taskNum:{width:'28px',height:'28px',borderRadius:'50%',background:'#1e1b4b',border:'1px solid #3730a3',display:'flex',alignItems:'center',justifyContent:'center',color:'#a5b4fc',fontSize:'12px',fontWeight:'700',flexShrink:0},
+    taskText:{color:'#d1d5db',lineHeight:'1.6',paddingTop:'3px',fontSize:'14px'},
+    promptWrap:{borderRadius:'16px',border:'1px solid #1f2937',overflow:'hidden',marginBottom:'20px'},
+    promptHeader:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 20px',borderBottom:'1px solid #1f2937',background:'#111827'},
+    promptTitle:{fontSize:'13px',fontWeight:'600',color:'#e5e7eb'},
+    copyBtn:(ok)=>({display:'flex',alignItems:'center',gap:'6px',padding:'6px 14px',borderRadius:'8px',border:'none',cursor:'pointer',fontSize:'12px',fontWeight:'600',background:ok?'#166534':'#1f2937',color:ok?'#4ade80':'#d1d5db',transition:'all 0.2s'}),
+    pre:{background:'#0f172a',padding:'20px',maxHeight:'340px',overflowY:'auto',fontFamily:'monospace',fontSize:'12px',color:'#cbd5e1',whiteSpace:'pre-wrap',wordBreak:'break-word',lineHeight:'1.6'},
+    linksCard:{background:'#111827',border:'1px solid #1f2937',borderRadius:'16px',padding:'24px',marginBottom:'40px'},
+    linksWrap:{display:'flex',flexWrap:'wrap',gap:'10px'},
+    link:{display:'inline-flex',alignItems:'center',gap:'8px',padding:'10px 16px',borderRadius:'10px',background:'#1f2937',border:'1px solid #374151',fontSize:'13px',color:'#e5e7eb',fontWeight:'500',textDecoration:'none',transition:'all 0.15s'},
+    navBtns:{display:'flex',justifyContent:'space-between',gap:'16px',paddingTop:'24px',borderTop:'1px solid #1f2937'},
+    prevBtn:(dis)=>({display:'flex',alignItems:'center',gap:'8px',padding:'12px 20px',borderRadius:'10px',border:'1px solid '+(dis?'#1f2937':'#374151'),background:dis?'#0f172a':'#1f2937',color:dis?'#374151':'#e5e7eb',fontSize:'13px',fontWeight:'600',cursor:dis?'not-allowed':'pointer'}),
+    nextBtn:{display:'flex',alignItems:'center',gap:'8px',padding:'12px 24px',borderRadius:'10px',border:'none',background:'linear-gradient(90deg,#4f46e5,#7c3aed)',color:'#fff',fontSize:'13px',fontWeight:'700',cursor:'pointer',boxShadow:'0 4px 20px #4f46e540'},
+    dnaCard:{background:'#111827',border:'1px solid #312e81',borderRadius:'16px',padding:'24px',marginBottom:'32px'},
+    dnaTitle:{fontSize:'11px',textTransform:'uppercase',letterSpacing:'0.08em',fontWeight:'700',color:'#818cf8',marginBottom:'12px',display:'flex',alignItems:'center',gap:'8px'},
+    dnaText:{fontSize:'13px',color:'#d1d5db',lineHeight:'1.6',marginBottom:'16px'},
+    actGrid:{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'8px'},
+    actBox:{background:'#1f2937',borderRadius:'8px',padding:'10px',border:'1px solid #374151'},
+    actLabel:{fontSize:'11px',color:'#818cf8',fontWeight:'700'},
+    actTime:{fontSize:'10px',color:'#6b7280',marginTop:'4px'},
+    doneCard:{background:'#111827',border:'1px solid #166534',borderRadius:'16px',padding:'32px',textAlign:'center',marginTop:'32px'},
+    doneIcon:{width:'56px',height:'56px',borderRadius:'50%',background:'#14532d',margin:'0 auto 16px',display:'flex',alignItems:'center',justifyContent:'center'},
+    doneTitle:{fontSize:'22px',fontWeight:'700',marginBottom:'8px'},
+    doneText:{color:'#9ca3af',maxWidth:'360px',margin:'0 auto',lineHeight:'1.6',fontSize:'14px'},
+  };
+
+  // SVG icons inline
+  const CheckSvg=()=>(
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  );
+  const ArrowL=()=>(
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+  );
+  const ArrowR=()=>(
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+  );
+  const ExtLink=()=>(
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+  );
+  const CopySvg=()=>(
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+  );
+
+  const stepIcons=["💡","{ }","🎬","✂️","🎙️","🚀"];
+
+  return(
+    <div style={s.app}>
+      {/* sidebar */}
+      <aside style={s.sidebar}>
+        <div style={s.brand}>
+          <div style={s.brandRow}>
+            <div style={s.brandIcon}><span style={{fontSize:'18px'}}>🎬</span></div>
+            <div>
+              <div style={s.brandTitle}>AI Ad Studio</div>
+              <div style={s.brandSub}>Viral Ad Workflow OS</div>
+            </div>
+          </div>
+          <div style={s.brandDesc}>Build a Liquid-Death-style talking-head ad in 6 guided steps.</div>
+        </div>
+        <div style={s.progWrap}>
+          <div style={s.progRow}>
+            <span style={s.progLabel}>Progress</span>
+            <span style={s.progCount}>{done.length}/{steps.length}</span>
+          </div>
+          <div style={s.progBar}><div style={{...s.progFill,width:pct+'%'}}/></div>
+          <div style={s.progPct}>{pct}% complete</div>
+        </div>
+        <nav style={s.nav}>
+          {steps.map(step=>{
+            const isA=active===step.id,isDone=done.includes(step.id);
+            return(
+              <button key={step.id} onClick={()=>{setActive(step.id);window.scrollTo({top:0,behavior:'smooth'});}} style={s.navBtn(isA,isDone)}>
+                <div style={s.navIcon(isA,isDone)}>
+                  {isDone?<CheckSvg/>:stepIcons[step.id-1]}
+                </div>
+                <div style={s.navText}>
+                  <div style={s.navNum}>Step {step.id}</div>
+                  <div style={s.navTitle(isA)}>{step.title}</div>
+                </div>
+              </button>
+            );
+          })}
+        </nav>
+        <div style={s.sidefoot}>Built for AI Film Makers Workshop</div>
+      </aside>
+
+      {/* main */}
+      <main style={s.main}>
+        <div style={s.content}>
+          <div style={s.stepMeta}>
+            <span style={s.stepNum}>Step {cur.id} of {steps.length}</span>
+            <span style={s.dot}>•</span>
+            <span style={s.stepDur}>{cur.dur}</span>
+          </div>
+          <div style={s.headerRow}>
+            <div style={s.headerIcon}><span style={{fontSize:'26px'}}>{stepIcons[cur.id-1]}</span></div>
+            <div>
+              <div style={s.h2}>{cur.title}</div>
+              <div style={s.h2sub}>{cur.sub}</div>
+            </div>
+          </div>
+          <div style={s.desc}>{cur.desc}</div>
+
+          {/* DNA callout on step 1 */}
+          {cur.id===1&&(
+            <div style={s.dnaCard}>
+              <div style={s.dnaTitle}>✨ The DNA of a Viral Talking-Head Ad</div>
+              <div style={s.dnaText}>Liquid Death's "Small Ones" works because of one mechanic: a phrase that <span style={{color:'#c084fc',fontWeight:'600'}}>sounds taboo</span> but is actually innocent. Six diverse characters say it deadpan. The reveal lands. The audience replays the ad — and that re-watch is what makes it spread.</div>
+              <div style={s.actGrid}>
+                {[['Tease','0–3s'],['Establish','3–15s'],['Escalate','15–28s'],['Reveal','28–35s'],['Kicker','35–40s']].map(([l,t],i)=>(
+                  <div key={i} style={s.actBox}>
+                    <div style={s.actLabel}>{l}</div>
+                    <div style={s.actTime}>{t}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* tasks */}
+          {cur.tasks.length>0&&(
+            <div style={s.card}>
+              <div style={s.cardTitle}>Action Items</div>
+              <ol style={s.taskList}>
+                {cur.tasks.map((t,i)=>(
+                  <li key={i} style={s.taskItem}>
+                    <div style={s.taskNum}>{i+1}</div>
+                    <div style={s.taskText}>{t}</div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          {/* prompts */}
+          {cur.prompts.length>0&&(
+            <div>
+              <div style={{...s.cardTitle,marginBottom:'16px'}}>AI Prompts & Reference</div>
+              {cur.prompts.map((p,i)=>{
+                const key=`${cur.id}-${i}`;const ok=copied===key;
+                return(
+                  <div key={i} style={s.promptWrap}>
+                    <div style={s.promptHeader}>
+                      <span style={s.promptTitle}>{p.t}</span>
+                      <button onClick={()=>copy(p.c,key)} style={s.copyBtn(ok)}>
+                        {ok?<CheckSvg/>:<CopySvg/>}{ok?'Copied!':'Copy Prompt'}
+                      </button>
+                    </div>
+                    <pre style={s.pre}>{p.c}</pre>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* links */}
+          {cur.links.length>0&&(
+            <div style={s.linksCard}>
+              <div style={s.cardTitle}>Resources & Links</div>
+              <div style={s.linksWrap}>
+                {cur.links.map((lk,i)=>(
+                  <a key={i} href={lk.u} target="_blank" rel="noopener noreferrer" style={s.link}
+                    onMouseEnter={e=>{e.currentTarget.style.background='#312e81';e.currentTarget.style.borderColor='#6366f1';}}
+                    onMouseLeave={e=>{e.currentTarget.style.background='#1f2937';e.currentTarget.style.borderColor='#374151';}}>
+                    <ExtLink/>{lk.l}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* nav */}
+          <div style={s.navBtns}>
+            <button disabled={active===1} onClick={()=>{if(active>1){setActive(active-1);window.scrollTo({top:0,behavior:'smooth'});}}} style={s.prevBtn(active===1)}>
+              <ArrowL/>Previous
+            </button>
+            <button onClick={complete} style={s.nextBtn}>
+              {active===steps.length?'Mark Complete':'Complete & Continue'}<ArrowR/>
+            </button>
+          </div>
+
+          {/* done */}
+          {active===steps.length&&done.includes(steps.length)&&(
+            <div style={s.doneCard}>
+              <div style={s.doneIcon}><CheckSvg/></div>
+              <div style={s.doneTitle}>You shipped an AI Ad. 🎬</div>
+              <div style={s.doneText}>Post it. Tag your brand. Send it to a client. This is the same workflow professional agencies are billing five figures for.</div>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.render(React.createElement(App),document.getElementById('root'));
+</script>
+</body>
+</html>
